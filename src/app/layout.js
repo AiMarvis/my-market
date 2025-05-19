@@ -3,6 +3,7 @@ import "./globals.css";
 import Header from './components/Header';
 import BottomNavigationBar from './components/BottomNavigationBar';
 import FloatingActionButton from './components/FloatingActionButton';
+import ReactQueryProvider from "./components/ReactQueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,12 +26,14 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Header />
-        <main className="pt-16 pb-16 min-h-screen">
-          {children}
-        </main>
-        <FloatingActionButton />
-        <BottomNavigationBar />
+        <ReactQueryProvider>
+          <Header />
+          <main className="pt-16 pb-16 min-h-screen">
+            {children}
+          </main>
+          <FloatingActionButton />
+          <BottomNavigationBar />
+        </ReactQueryProvider>
       </body>
     </html>
   );

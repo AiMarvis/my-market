@@ -2,8 +2,10 @@
 
 import { useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function ProductFormModal({ closeModal }) {
+  const queryClient = useQueryClient();
   const [productName, setProductName] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
@@ -27,10 +29,13 @@ export default function ProductFormModal({ closeModal }) {
     setIsLoading(true);
     setError(null);
 
-    let imageUrl = null;
+    let image_url = null;
     try {
       if (selectedFile) {
-        const fileName = `${Date.now()}_${selectedFile.name}`;
+        const originalFileName = selectedFile.name;
+        const safeFileNameStep1 = originalFileName.replace(/\s+/g, '_');
+        const safeFileNameFinal = encodeURIComponent(safeFileNameStep1);
+        const fileName = `${Date.now()}_${safeFileNameFinal}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('product-images')
           .upload(fileName, selectedFile);
@@ -39,7 +44,7 @@ export default function ProductFormModal({ closeModal }) {
           throw uploadError;
         }
         const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
-        imageUrl = urlData.publicUrl;
+        image_url = urlData.publicUrl;
       }
 
       const { data, error: insertError } = await supabase
@@ -49,7 +54,7 @@ export default function ProductFormModal({ closeModal }) {
             name: productName,
             price: parseFloat(price),
             description: description,
-            image_url: imageUrl,
+            image_url: image_url,
           },
         ])
         .select();
@@ -60,6 +65,9 @@ export default function ProductFormModal({ closeModal }) {
 
       console.log('Supabase에 저장된 데이터:', data);
       alert('물건이 성공적으로 등록되었습니다!');
+      
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+
       setProductName('');
       setPrice('');
       setDescription('');
@@ -129,12 +137,12 @@ export default function ProductFormModal({ closeModal }) {
             ></textarea>
           </div>
           <div>
-            <label className="label" htmlFor="image">
+            <label className="label" htmlFor="image_url">
               <span className="label-text">상품 이미지</span>
             </label>
             <input
               type="file"
-              id="image"
+              id="image_url"
               ref={fileInputRef}
               onChange={handleFileChange}
               className="file-input file-input-bordered w-full"
